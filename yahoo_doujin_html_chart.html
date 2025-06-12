@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yahoo Auction vs Digital Doujin Content Market</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            color: #1f2937;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .divider {
+            width: 8rem;
+            height: 4px;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            margin: 0 auto;
+            border-radius: 2px;
+        }
+
+        .chart-container {
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid #e5e7eb;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 500px;
+            width: 100%;
+        }
+
+        .custom-tooltip {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(107, 114, 128, 0.5);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            color: white;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .title {
+                font-size: 1.25rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+            
+            .chart-wrapper {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">Yahoo! オークション vs デジタル同人コンテンツ市場 (2015-2023)</h1>
+            <div class="divider"></div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <canvas id="marketChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // データ
+        const data = {
+            labels: ['2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023'],
+            datasets: [
+                {
+                    label: 'Yahoo! オークション (物理商品)',
+                    data: [862, 888, 934, 901, 860, 831, 920, 1000, 979],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#1e40af',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 10,
+                    pointHoverBackgroundColor: '#1e40af',
+                    pointHoverBorderColor: '#3b82f6',
+                    pointHoverBorderWidth: 3,
+                    yAxisID: 'y',
+                    tension: 0.4
+                },
+                {
+                    label: 'デジタル同人コンテンツ',
+                    data: [78, 79, 80, 82, 85, 75, 81, 93, 128],
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ec4899',
+                    pointBorderColor: '#be185d',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 10,
+                    pointHoverBackgroundColor: '#be185d',
+                    pointHoverBorderColor: '#ec4899',
+                    pointHoverBorderWidth: 3,
+                    yAxisID: 'y1',
+                    tension: 0.4
+                }
+            ]
+        };
+
+        // 設定
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#e5e7eb',
+                            font: {
+                                size: 14,
+                                weight: '500'
+                            },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#e5e7eb',
+                        borderColor: 'rgba(107, 114, 128, 0.5)',
+                        borderWidth: 1,
+                        cornerRadius: 12,
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: '600'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label + '年';
+                            },
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' 億円';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#e5e7eb',
+                            font: {
+                                size: 14,
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)',
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Yahoo! オークション GMV (億円)',
+                            color: '#3b82f6',
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            }
+                        },
+                        ticks: {
+                            color: '#3b82f6',
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(59, 130, 246, 0.1)',
+                            drawBorder: false
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: '同人コンテンツ市場 (億円)',
+                            color: '#ec4899',
+                            font: {
+                                size: 12,
+                                weight: '600'
+                            }
+                        },
+                        ticks: {
+                            color: '#ec4899',
+                            font: {
+                                size: 12,
+                                weight: '500'
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                            color: 'rgba(236, 72, 153, 0.1)',
+                            drawBorder: false
+                        }
+                    }
+                },
+                onHover: (event, activeElements) => {
+                    event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                }
+            }
+        };
+
+        // チャートを作成
+        const ctx = document.getElementById('marketChart').getContext('2d');
+        const chart = new Chart(ctx, config);
+
+        // レスポンシブ対応
+        window.addEventListener('resize', () => {
+            chart.resize();
+        });
+    </script>
+</body>
+</html>
